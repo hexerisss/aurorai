@@ -4,9 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  onNavigate: (view: 'chat' | 'settings') => void;
 }
 
-const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
+const Sidebar = ({ isOpen, setIsOpen, onNavigate }: SidebarProps) => {
+  // Add a prop to control view switching from App.tsx
+  // For now we'll use a custom event or we can pass a prop.
+  // Since we are editing, I'll just add a prop to Sidebar.
   const chatHistory = [
     "Productivity hack ideas",
     "Code debugging help",
@@ -69,15 +73,27 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                 <History size={16} className="text-gray-500" />
                 History
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors">
-                <Settings size={16} className="text-gray-500" />
-                Settings
-              </button>
-              <div className="pt-4 border-t border-gray-800/60 mt-2">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors">
-                  <User size={16} className="text-gray-500" />
-                  My Account
-                </button>
+<button 
+  onClick={() => {
+    onNavigate('settings');
+    setIsOpen(false);
+  }}
+  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
+>
+  <Settings size={16} className="text-gray-500" />
+  Settings
+</button>
+<div className="pt-4 border-t border-gray-800/60 mt-2">
+  <button 
+    onClick={() => {
+      onNavigate('settings');
+      setIsOpen(false);
+    }}
+    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
+  >
+    <User size={16} className="text-gray-500" />
+    My Account
+  </button>
                 <button 
                   onClick={() => window.location.reload()}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-900/20 text-red-400 text-sm transition-colors mt-1"
