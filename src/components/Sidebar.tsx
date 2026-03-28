@@ -1,16 +1,20 @@
 import { MessageSquare, Plus, Settings, History, User, LogOut, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { cn } from '../utils/cn';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  onNavigate: (view: 'chat' | 'settings') => void;
+  onLogout: () => void;
 }
 
-const Sidebar = ({ isOpen, setIsOpen, onNavigate }: SidebarProps) => {
-  // Add a prop to control view switching from App.tsx
-  // For now we'll use a custom event or we can pass a prop.
-  // Since we are editing, I'll just add a prop to Sidebar.
+const Sidebar = ({ isOpen, setIsOpen, onLogout }: SidebarProps) => {
+  const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  
+  const currentUser = localStorage.getItem('aurora_current_user') || 'User';
   const chatHistory = [
     "Productivity hack ideas",
     "Code debugging help",
@@ -73,29 +77,23 @@ const Sidebar = ({ isOpen, setIsOpen, onNavigate }: SidebarProps) => {
                 <History size={16} className="text-gray-500" />
                 History
               </button>
-<button 
-  onClick={() => {
-    onNavigate('settings');
-    setIsOpen(false);
-  }}
-  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
->
-  <Settings size={16} className="text-gray-500" />
-  Settings
-</button>
-<div className="pt-4 border-t border-gray-800/60 mt-2">
-  <button 
-    onClick={() => {
-      onNavigate('settings');
-      setIsOpen(false);
-    }}
-    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
-  >
-    <User size={16} className="text-gray-500" />
-    My Account
-  </button>
+              <button 
+                onClick={() => setShowSettings(true)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
+              >
+                <Settings size={16} className="text-gray-500" />
+                Settings
+              </button>
+              <div className="pt-4 border-t border-gray-800/60 mt-2">
                 <button 
-                  onClick={() => window.location.reload()}
+                  onClick={() => setShowProfile(true)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/80 text-gray-300 text-sm transition-colors"
+                >
+                  <User size={16} className="text-gray-500" />
+                  My Account
+                </button>
+                <button 
+                  onClick={onLogout}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-900/20 text-red-400 text-sm transition-colors mt-1"
                 >
                   <LogOut size={16} className="text-red-500" />
@@ -103,6 +101,118 @@ const Sidebar = ({ isOpen, setIsOpen, onNavigate }: SidebarProps) => {
                 </button>
               </div>
             </div>
+            
+            {/* Settings Modal */}
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-gray-950 z-50 flex flex-col"
+                >
+                  <div className="p-6 border-b border-gray-800/60">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white">Settings</h2>
+                      <button 
+                        onClick={() => setShowSettings(false)}
+                        className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 p-6 space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800">
+                        <div>
+                          <h3 className="text-white font-medium">Dark Mode</h3>
+                          <p className="text-gray-400 text-sm">Toggle dark theme</p>
+                        </div>
+                        <button
+                          onClick={() => setDarkMode(!darkMode)}
+                          className={cn(
+                            "w-12 h-6 rounded-full transition-colors",
+                            darkMode ? "bg-indigo-600" : "bg-gray-700"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-5 h-5 bg-white rounded-full transition-transform",
+                            darkMode ? "translate-x-6" : "translate-x-0.5"
+                          )} />
+                        </button>
+                      </div>
+                      
+                      <div className="p-4 bg-gray-900 rounded-xl border border-gray-800">
+                        <h3 className="text-white font-medium mb-2">About Aurora AI</h3>
+                        <p className="text-gray-400 text-sm">Version 1.0.0</p>
+                        <p className="text-gray-400 text-sm mt-1">Your personal AI companion</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Profile Modal */}
+            <AnimatePresence>
+              {showProfile && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-gray-950 z-50 flex flex-col"
+                >
+                  <div className="p-6 border-b border-gray-800/60">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white">My Account</h2>
+                      <button 
+                        onClick={() => setShowProfile(false)}
+                        className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 p-6 space-y-6">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
+                        <User size={40} className="text-white" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-white text-xl font-bold">{currentUser}</h3>
+                        <p className="text-gray-400 text-sm">Username</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-900 rounded-xl border border-gray-800">
+                        <h3 className="text-white font-medium mb-2">Account Info</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Member Since</span>
+                            <span className="text-gray-200">Today</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => {
+                          onLogout();
+                          setShowProfile(false);
+                        }}
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium transition-colors"
+                      >
+                        <LogOut size={20} />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>

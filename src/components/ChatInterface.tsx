@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Copy, Sparkles, Settings2, Code2, MessageSquare } from 'lucide-react';
+import { Send, Copy, Sparkles, Settings2, Code2, MessageSquare, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { generateAIResponse, ModelType } from '../services/ai';
 import { cn } from '../utils/cn';
@@ -10,6 +10,51 @@ interface Message {
   content: string;
   timestamp: Date;
 }
+
+const CodeBlock: React.FC<{ content: string }> = ({ content }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative bg-gray-900 border border-gray-700 rounded-lg p-3 my-2 overflow-x-auto">
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 right-2 p-1.5 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors z-10"
+      >
+        {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} className="text-gray-400" />}
+      </button>
+      <pre className="text-sm text-gray-200 font-mono whitespace-pre-wrap overflow-x-auto">
+        <code>{content}</code>
+      </pre>
+    </div>
+  );
+};
+
+const formatMessageContent = (content: string) => {
+  // Split content by code blocks (```)
+  const parts = content.split(/(```[\s\S]*?```)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('```') && part.endsWith('```')) {
+      // Extract code content (remove the backticks and language identifier if present)
+      const codeContent = part.replace(/^```[\w]*\n?/, '').replace(/```$/, '').trim();
+      return <CodeBlock key={index} content={codeContent} />;
+    } else {
+      // Regular text - split into lines to preserve line breaks
+      return part.split('\n').map((line, lineIndex) => (
+        <React.Fragment key={`${index}-${lineIndex}`}>
+          {line}
+          {lineIndex < part.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      ));
+    }
+  });
+};
 
 const MODELS: { id: ModelType; name: string; icon: React.ElementType }[] = [
   { id: 'casual', name: 'Casual', icon: MessageSquare },
@@ -132,37 +177,14 @@ const ChatInterface = () => {
                 )}
               </div>
               
-              <div className={cn("space-y-1.5", msg.role === 'user' ? 'items-end' : 'items-start')}>
-                <div className={cn("space-y-2", msg.role === 'user' ? 'items-end' : 'items-start')}>
-                  <div className={cn("px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap word-break",
+                <div className={cn("space-y-1.5", msg.role === 'user' ? 'items-end' : 'items-start')}>
+                  <div className={cn("px-4 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm word-break",
                     msg.role === 'user' 
-                      ? 'bg-indigo-600 text-white rounded-tr-none' 
+                      ? 'bg-indigo-600 text-white rounded-tr-none whitespace-pre-wrap' 
                       : 'bg-gray-800/80 border border-gray-700/50 text-gray-200 rounded-tl-none'
                   )}>
-                    {msg.content.split(/\n{2,}/).map((block, i, arr) => {
-                      if (block.startsWith('```')) {
-                        const content = block.replace(/^```[a-z]*\n?([\s\S]*?)```\n?$/, '$1').trim();
-                        return (
-                          <div key={i} className="my-3 rounded-xl overflow-hidden border border-gray-700 bg-gray-900/80 font-mono text-sm text-indigo-300 shadow-inner">
-                            <div className="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-700 text-gray-400 text-xs">
-                              <span>Code Block</span>
-                              <button 
-                                onClick={() => navigator.clipboard.writeText(content)}
-                                className="hover:text-white transition-colors"
-                              >
-                                Copy
-                              </button>
-                            </div>
-                            <pre className="p-4 overflow-x-auto scrollbar-hide">
-                              <code>{content}</code>
-                            </pre>
-                          </div>
-                        );
-                      }
-                      return <p key={i} className={block === arr[0] ? '' : 'mt-4'}>{block}</p>;
-                    })}
+                    {formatMessageContent(msg.content)}
                   </div>
-                </div>
                 <div className={cn("flex items-center gap-2 text-[10px] text-gray-500 px-1", msg.role === 'user' && "justify-end")}>
                   <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   {msg.role === 'assistant' && (

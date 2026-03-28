@@ -1,19 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
 import Sidebar from './components/Sidebar';
 import { Login } from './components/Login';
-import SettingsView from './components/SettingsView';
 import { Menu, Sparkles } from 'lucide-react';
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem('aurora_current_user');
-  });
-  const [activeView, setActiveView] = useState<'chat' | 'settings'>('chat');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const currentUser = localStorage.getItem('aurora_current_user');
+    if (currentUser) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('aurora_current_user');
+    setIsAuthenticated(false);
+  };
 
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+    return <Login onLogin={handleLogin} />;
   }
 
   return (
@@ -27,11 +40,7 @@ const App = () => {
       )}
 
       {/* Sidebar */}
-      <Sidebar 
-  isOpen={isSidebarOpen} 
-  setIsOpen={setIsSidebarOpen} 
-  onNavigate={setActiveView} 
-/>
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} onLogout={handleLogout} />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative h-full w-full max-w-md mx-auto md:max-w-none md:mx-0 bg-gray-950 shadow-2xl md:shadow-none">
@@ -54,14 +63,7 @@ const App = () => {
           <div className="w-10" /> {/* Spacer for centering */}
         </header>
 
-        {activeView === 'chat' ? (
-          <ChatInterface />
-        ) : (
-          <SettingsView 
-            user={localStorage.getItem('aurora_current_user') || 'User'} 
-            onBack={() => setActiveView('chat')} 
-          />
-        )}
+        <ChatInterface />
       </main>
     </div>
   );
