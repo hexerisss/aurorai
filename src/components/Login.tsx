@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { signIn, signUp } from '../services/auth';
 
 interface LoginProps {
   onLogin: () => void;
@@ -14,43 +15,28 @@ export function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    const normalizedUsername = username.trim();
+    const normalizedPassword = password.trim();
 
-    // Simulated mock database logic (using localStorage as a bridge for user context)
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      const storedUsers = JSON.parse(localStorage.getItem('aurora_users') || '{}');
-
+    try {
       if (isLoginView) {
-        // Sign In Flow
-        if (storedUsers[username] && storedUsers[username] === password) {
-          localStorage.setItem('aurora_current_user', username);
-          onLogin();
-        } else {
-          setError('Invalid username or password');
-        }
+        const result = await signIn(normalizedUsername, normalizedPassword);
+        localStorage.setItem('aurora_current_user', result.user?.username || normalizedUsername);
+        onLogin();
       } else {
-        // Sign Up Flow
-        if (storedUsers[username]) {
-          setError('Username already exists');
-        } else if (username.length < 3) {
-          setError('Username must be at least 3 characters');
-        } else if (password.length < 4) {
-          setError('Password must be at least 4 characters');
-        } else {
-          storedUsers[username] = password;
-          localStorage.setItem('aurora_users', JSON.stringify(storedUsers));
-          localStorage.setItem('aurora_current_user', username);
-          
-          // Automatically log them in after sign up
-          onLogin();
-        }
+        const result = await signUp(normalizedUsername, normalizedPassword);
+        localStorage.setItem('aurora_current_user', result.user?.username || normalizedUsername);
+        onLogin();
       }
-    }, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

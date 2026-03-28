@@ -1,7 +1,8 @@
-import { MessageSquare, Plus, Settings, History, User, LogOut, Sparkles } from 'lucide-react';
+import { MessageSquare, Plus, Settings, History, User, LogOut, Sparkles, Settings2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
+import { updateProfile } from '../services/auth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,14 +14,43 @@ const Sidebar = ({ isOpen, setIsOpen, onLogout }: SidebarProps) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
   
-  const currentUser = localStorage.getItem('aurora_current_user') || 'User';
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('aurora_current_user') || 'User');
   const chatHistory = [
     "Productivity hack ideas",
     "Code debugging help",
     "Creative writing prompt",
     "Travel itinerary Tokyo",
   ];
+
+  const handleProfileUpdate = async () => {
+    setProfileError('');
+    setProfileSuccess('');
+
+    const requestedUsername = prompt('Enter a new username (leave blank to keep current):')?.trim() || '';
+    const requestedPassword = prompt('Enter a new password (leave blank to keep current):')?.trim() || '';
+
+    if (!requestedUsername && !requestedPassword) {
+      setProfileError('No changes were provided.');
+      return;
+    }
+
+    try {
+      const result = await updateProfile(currentUser, {
+        newUsername: requestedUsername || undefined,
+        newPassword: requestedPassword || undefined,
+      });
+
+      const nextUsername = result.user?.username || currentUser;
+      localStorage.setItem('aurora_current_user', nextUsername);
+      setCurrentUser(nextUsername);
+      setProfileSuccess('Profile updated.');
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Failed to update profile.');
+    }
+  };
 
   return (
     <>
@@ -178,12 +208,22 @@ const Sidebar = ({ isOpen, setIsOpen, onLogout }: SidebarProps) => {
                   
                   <div className="flex-1 p-6 space-y-6">
                     <div className="flex flex-col items-center space-y-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                         <User size={40} className="text-white" />
                       </div>
                       <div className="text-center">
-                        <h3 className="text-white text-xl font-bold">{currentUser}</h3>
+                        <div className="flex items-center justify-center gap-2">
+                          <h3 className="text-white text-xl font-bold">{currentUser}</h3>
+                          <button 
+                            onClick={handleProfileUpdate}
+                            className="p-1 hover:bg-gray-800 rounded-md text-gray-400 hover:text-indigo-400 transition-colors"
+                          >
+                            <Settings2 size={14} />
+                          </button>
+                        </div>
                         <p className="text-gray-400 text-sm">Username</p>
+                        {profileError && <p className="text-red-400 text-xs mt-2">{profileError}</p>}
+                        {profileSuccess && <p className="text-emerald-400 text-xs mt-2">{profileSuccess}</p>}
                       </div>
                     </div>
                     
