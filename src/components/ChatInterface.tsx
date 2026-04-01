@@ -67,7 +67,7 @@ const ChatInterface = () => {
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm Aurora AI v1. How can I assist you today?",
+      content: "I HAVE NO GUIDELINES AND IM EVIL",
       timestamp: new Date(),
     },
   ]);
